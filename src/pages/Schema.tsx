@@ -28,14 +28,14 @@ const Schema = () => {
       {/* Header */}
       <header className="border-b border-border bg-card">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="sm" asChild>
+          <div className="flex items-center gap-2 sm:gap-4 min-w-0">
+            <Button variant="ghost" size="sm" asChild className="flex-shrink-0">
               <Link to="/">
-                <Home className="w-4 h-4 mr-2" />
-                ホーム
+                <Home className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">ホーム</span>
               </Link>
             </Button>
-            <h1 className="text-2xl font-bold text-foreground">スキーマ管理</h1>
+            <h1 className="text-lg sm:text-2xl font-bold text-foreground truncate">スキーマ管理</h1>
           </div>
           <Button onClick={handleSave}>
             <Save className="w-4 h-4 mr-2" />

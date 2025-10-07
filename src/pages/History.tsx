@@ -34,11 +34,11 @@ export default function History() {
         <div className="space-y-6">
           {/* ヘッダー */}
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button asChild variant="ghost" size="sm">
+            <div className="flex items-center gap-2 sm:gap-4">
+              <Button asChild variant="ghost" size="sm" className="flex-shrink-0">
                 <Link to="/">
-                  <Home className="h-4 w-4 mr-2" />
-                  ホーム
+                  <Home className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">ホーム</span>
                 </Link>
               </Button>
               <div>

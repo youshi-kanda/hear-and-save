@@ -210,26 +210,26 @@ const Recorder = () => {
       {/* Header */}
       <header className="border-b border-border bg-card">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button variant="outline" size="sm" asChild>
+          <div className="flex items-center gap-2 sm:gap-4 min-w-0">
+            <Button variant="outline" size="sm" asChild className="flex-shrink-0">
               <Link to="/">
-                <Home className="w-4 h-4 mr-2" />
-                ホーム
+                <Home className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">ホーム</span>
               </Link>
             </Button>
-            <h1 className="text-2xl font-bold text-foreground">営業ヒアリング記録</h1>
+            <h1 className="text-lg sm:text-2xl font-bold text-foreground truncate">営業ヒアリング記録</h1>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-1 sm:gap-2 flex-shrink-0">
             <Button variant="outline" size="sm" asChild>
               <Link to="/schema">
-                <SettingsIcon className="w-4 h-4 mr-2" />
-                スキーマ
+                <SettingsIcon className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">スキーマ</span>
               </Link>
             </Button>
             <Button variant="outline" size="sm" asChild>
               <Link to="/settings">
-                <SettingsIcon className="w-4 h-4 mr-2" />
-                設定
+                <SettingsIcon className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">設定</span>
               </Link>
             </Button>
           </div>
