@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Mic, Square, Play, Pause, Star, Settings as SettingsIcon } from 'lucide-react';
+import { Mic, Square, Play, Pause, Star, Settings as SettingsIcon, Home } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import ConsentModal from '@/components/recorder/ConsentModal';
 import LevelMeter from '@/components/recorder/LevelMeter';
@@ -210,7 +210,15 @@ const Recorder = () => {
       {/* Header */}
       <header className="border-b border-border bg-card">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-foreground">営業ヒアリング記録</h1>
+          <div className="flex items-center gap-4">
+            <Button variant="outline" size="sm" asChild>
+              <Link to="/">
+                <Home className="w-4 h-4 mr-2" />
+                ホーム
+              </Link>
+            </Button>
+            <h1 className="text-2xl font-bold text-foreground">営業ヒアリング記録</h1>
+          </div>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" asChild>
               <Link to="/schema">

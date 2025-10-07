@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Save } from 'lucide-react';
+import { ArrowLeft, Save, Home } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { getAsrConfig, getLlmConfig, saveAsrConfig, saveLlmConfig } from '@/lib/storage';
 import type { AsrProvider, LlmProvider, AsrConfig, LlmConfig } from '@/lib/api';
@@ -78,8 +78,8 @@ const Settings = () => {
           <div className="flex items-center gap-4">
             <Button variant="ghost" size="sm" asChild>
               <Link to="/">
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                戻る
+                <Home className="w-4 h-4 mr-2" />
+                ホーム
               </Link>
             </Button>
             <h1 className="text-2xl font-bold text-foreground">設定</h1>

@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Search, FileText, Calendar, User, Tag } from "lucide-react";
+import { ArrowLeft, Search, FileText, Calendar, User, Tag, Home } from "lucide-react";
 
 // ダミーデータ（実際にはAPIから取得）
 const allRecords = [
@@ -35,9 +35,10 @@ export default function History() {
           {/* ヘッダー */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <Button asChild variant="ghost" size="icon">
+              <Button asChild variant="ghost" size="sm">
                 <Link to="/">
-                  <ArrowLeft className="h-5 w-5" />
+                  <Home className="h-4 w-4 mr-2" />
+                  ホーム
                 </Link>
               </Button>
               <div>

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Plus, Save } from 'lucide-react';
+import { ArrowLeft, Plus, Save, Home } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import SchemaEditor from '@/components/schema/SchemaEditor';
 
@@ -31,8 +31,8 @@ const Schema = () => {
           <div className="flex items-center gap-4">
             <Button variant="ghost" size="sm" asChild>
               <Link to="/">
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                戻る
+                <Home className="w-4 h-4 mr-2" />
+                ホーム
               </Link>
             </Button>
             <h1 className="text-2xl font-bold text-foreground">スキーマ管理</h1>
