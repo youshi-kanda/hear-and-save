@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Mic, Square, Play, Pause, Star, Settings as SettingsIcon } from 'lucide-react';
@@ -30,29 +30,174 @@ const Recorder = () => {
   const [summary, setSummary] = useState('');
   const [extractedData, setExtractedData] = useState<Record<string, string>>({});
 
-  const handleStartRecording = () => {
+  // MediaRecorder関連の ref と state
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const levelIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  const handleStartRecording = async () => {
     if (!hasConsent()) {
       setShowConsent(true);
       return;
     }
-    setRecordingState('recording');
-    // TODO: Start MediaRecorder
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
+
+      // AudioContext setup for level monitoring
+      audioContextRef.current = new AudioContext();
+      analyserRef.current = audioContextRef.current.createAnalyser();
+      const source = audioContextRef.current.createMediaStreamSource(stream);
+      source.connect(analyserRef.current);
+
+      // MediaRecorder setup
+      const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+      mediaRecorderRef.current = mediaRecorder;
+      chunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          chunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = () => {
+        processRecording();
+      };
+
+      mediaRecorder.start();
+      setRecordingState('recording');
+      
+      // Start duration timer
+      intervalRef.current = setInterval(() => {
+        setDuration(prev => prev + 1);
+      }, 1000);
+
+      // Start level monitoring
+      startLevelMonitoring();
+
+    } catch (error) {
+      console.error('Failed to start recording:', error);
+      alert('マイクへのアクセスが拒否されました。ブラウザの設定を確認してください。');
+    }
   };
 
   const handleStopRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
+    }
+    cleanup();
     setRecordingState('completed');
-    // TODO: Stop MediaRecorder and process
   };
 
   const handlePauseRecording = () => {
-    setRecordingState('paused');
-    // TODO: Pause MediaRecorder
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+      mediaRecorderRef.current.pause();
+      setRecordingState('paused');
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+      if (levelIntervalRef.current) {
+        clearInterval(levelIntervalRef.current);
+      }
+    }
   };
 
   const handleResumeRecording = () => {
-    setRecordingState('recording');
-    // TODO: Resume MediaRecorder
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'paused') {
+      mediaRecorderRef.current.resume();
+      setRecordingState('recording');
+      
+      // Resume duration timer
+      intervalRef.current = setInterval(() => {
+        setDuration(prev => prev + 1);
+      }, 1000);
+
+      // Resume level monitoring
+      startLevelMonitoring();
+    }
   };
+
+  const startLevelMonitoring = () => {
+    if (!analyserRef.current) return;
+    
+    const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
+    
+    levelIntervalRef.current = setInterval(() => {
+      if (analyserRef.current) {
+        analyserRef.current.getByteFrequencyData(dataArray);
+        const average = dataArray.reduce((sum, value) => sum + value, 0) / dataArray.length;
+        setAudioLevel(Math.min(100, (average / 255) * 100));
+      }
+    }, 100);
+  };
+
+  const cleanup = () => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+    if (levelIntervalRef.current) {
+      clearInterval(levelIntervalRef.current);
+      levelIntervalRef.current = null;
+    }
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+    if (audioContextRef.current) {
+      audioContextRef.current.close();
+      audioContextRef.current = null;
+    }
+    setAudioLevel(0);
+  };
+
+  const processRecording = async () => {
+    if (chunksRef.current.length === 0) return;
+
+    const audioBlob = new Blob(chunksRef.current, { type: 'audio/webm' });
+    
+    // Convert to base64 for API
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      const base64 = (reader.result as string).split(',')[1];
+      
+      setCurrentStep('asr');
+      
+      // TODO: Call ASR API
+      setTimeout(() => {
+        setTranscript('音声認識処理が完了しました。設定画面でASRプロバイダーを設定してください。');
+        setCurrentStep('summary');
+        
+        setTimeout(() => {
+          setSummary('要約処理が完了しました。設定画面でLLMプロバイダーを設定してください。');
+          setCurrentStep('extract');
+          
+          setTimeout(() => {
+            setExtractedData({
+              '面談相手の氏名': '設定完了後に自動抽出されます',
+              '訪問目的': '設定完了後に自動抽出されます'
+            });
+            setCurrentStep('save');
+          }, 1000);
+        }, 1000);
+      }, 2000);
+    };
+    
+    reader.readAsDataURL(audioBlob);
+  };
+
+  // Cleanup on component unmount
+  useEffect(() => {
+    return () => {
+      cleanup();
+    };
+  }, []);
 
   const handleAddBookmark = () => {
     setBookmarks([...bookmarks, { time: duration }]);
