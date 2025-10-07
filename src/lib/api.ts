@@ -50,9 +50,13 @@ export async function post<T>(body: any): Promise<T> {
     
     const res = await fetch(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json'
+      },
       body: JSON.stringify(body),
-      signal: controller.signal
+      signal: controller.signal,
+      mode: 'cors',
+      credentials: 'omit'
     });
     
     clearTimeout(timeoutId);
