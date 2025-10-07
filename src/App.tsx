@@ -17,7 +17,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter>
+      <BrowserRouter basename="/hear-and-save">
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/record" element={<Recorder />} />
