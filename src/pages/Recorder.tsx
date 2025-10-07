@@ -9,7 +9,9 @@ import ProgressSteps from '@/components/recorder/ProgressSteps';
 import BookmarkBar from '@/components/recorder/BookmarkBar';
 import SummaryCard from '@/components/results/SummaryCard';
 import ExtractTable from '@/components/results/ExtractTable';
-import { hasConsent } from '@/lib/storage';
+import { hasConsent, getAsrConfig, getLlmConfig } from '@/lib/storage';
+import { transcribe, analyzeAndSave } from '@/lib/api';
+import { useToast } from '@/hooks/use-toast';
 
 export type RecordingState = 'idle' | 'recording' | 'paused' | 'completed';
 export type ProcessStep = 'recording' | 'asr' | 'summary' | 'extract' | 'save';
@@ -20,6 +22,7 @@ export interface Bookmark {
 }
 
 const Recorder = () => {
+  const { toast } = useToast();
   const [showConsent, setShowConsent] = useState(!hasConsent());
   const [recordingState, setRecordingState] = useState<RecordingState>('idle');
   const [currentStep, setCurrentStep] = useState<ProcessStep>('recording');
@@ -167,26 +170,60 @@ const Recorder = () => {
     reader.onloadend = async () => {
       const base64 = (reader.result as string).split(',')[1];
       
-      setCurrentStep('asr');
-      
-      // TODO: Call ASR API
-      setTimeout(() => {
-        setTranscript('音声認識処理が完了しました。設定画面でASRプロバイダーを設定してください。');
+      try {
+        // Step 1: ASR (音声認識)
+        setCurrentStep('asr');
+        
+        const asrConfig = getAsrConfig();
+        if (!asrConfig) {
+          setTranscript('設定画面でASRプロバイダーを設定してください。');
+          toast({
+            title: 'ASR設定が必要です',
+            description: '設定ページでASRプロバイダーのAPIキーを設定してください。',
+            variant: 'destructive'
+          });
+          return;
+        }
+
+        const transcribeResult = await transcribe(base64, asrConfig);
+        setTranscript(transcribeResult.transcript);
+
+        // Step 2: LLM Analysis (要約・抽出)
         setCurrentStep('summary');
         
-        setTimeout(() => {
-          setSummary('要約処理が完了しました。設定画面でLLMプロバイダーを設定してください。');
-          setCurrentStep('extract');
-          
-          setTimeout(() => {
-            setExtractedData({
-              '面談相手の氏名': '設定完了後に自動抽出されます',
-              '訪問目的': '設定完了後に自動抽出されます'
-            });
-            setCurrentStep('save');
-          }, 1000);
-        }, 1000);
-      }, 2000);
+        const llmConfig = getLlmConfig();
+        if (!llmConfig) {
+          setSummary('設定画面でLLMプロバイダーを設定してください。');
+          toast({
+            title: 'LLM設定が必要です',
+            description: '設定ページでLLMプロバイダーのAPIキーを設定してください。',
+            variant: 'destructive'
+          });
+          return;
+        }
+
+        setCurrentStep('extract');
+        
+        const analysisResult = await analyzeAndSave(transcribeResult.transcript, llmConfig);
+        setSummary(analysisResult.summary);
+        setExtractedData(analysisResult.data);
+
+        // Step 3: Save Complete
+        setCurrentStep('save');
+        
+        toast({
+          title: '処理完了',
+          description: `音声認識、分析、スプレッドシート保存が完了しました。シート: ${analysisResult.activeSheet}`,
+        });
+
+      } catch (error) {
+        console.error('Processing error:', error);
+        toast({
+          title: '処理エラー',
+          description: `エラー: ${error instanceof Error ? error.message : '不明なエラー'}`,
+          variant: 'destructive'
+        });
+      }
     };
     
     reader.readAsDataURL(audioBlob);
