@@ -185,7 +185,11 @@ const Recorder = () => {
           return;
         }
 
+        console.log('Starting ASR with config:', { provider: asrConfig.provider, model: asrConfig.model });
+        console.log('Audio base64 length:', base64.length);
+        
         const transcribeResult = await transcribe(base64, asrConfig);
+        console.log('ASR Result:', transcribeResult);
         setTranscript(transcribeResult.transcript);
 
         // Step 2: LLM Analysis (要約・抽出)
@@ -218,9 +222,26 @@ const Recorder = () => {
 
       } catch (error) {
         console.error('Processing error:', error);
+        
+        let errorTitle = '処理エラー';
+        let errorMessage = error instanceof Error ? error.message : '不明なエラー';
+        
+        // 具体的なエラーメッセージを設定
+        if (errorMessage.includes('タイムアウト')) {
+          errorTitle = 'タイムアウトエラー';
+        } else if (errorMessage.includes('API key')) {
+          errorTitle = 'API認証エラー';
+          errorMessage = 'APIキーが無効です。設定を確認してください。';
+        } else if (errorMessage.includes('HTTP 4')) {
+          errorTitle = 'API設定エラー';
+        } else if (errorMessage.includes('NetworkError') || errorMessage.includes('Failed to fetch')) {
+          errorTitle = 'ネットワークエラー';
+          errorMessage = 'インターネット接続を確認してください。';
+        }
+        
         toast({
-          title: '処理エラー',
-          description: `エラー: ${error instanceof Error ? error.message : '不明なエラー'}`,
+          title: errorTitle,
+          description: errorMessage,
           variant: 'destructive'
         });
       }
