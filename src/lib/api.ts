@@ -35,7 +35,7 @@ export interface SchemaResponse {
   sheets?: Array<{ name: string; fields: string[] }>;
 }
 
-// JSONP回避策を使用したGAS WebApp通信
+// シンプルなPOSTリクエストを使用したGAS WebApp通信
 export async function post<T>(body: any): Promise<T> {
   const url = import.meta.env.VITE_GAS_API_URL!;
   if (!url) {
@@ -45,24 +45,31 @@ export async function post<T>(body: any): Promise<T> {
   console.log('API Request:', { url, route: body.route });
 
   try {
-    // GETリクエストでデータを送信（CORS回避）
-    const params = new URLSearchParams();
-    params.append('data', JSON.stringify(body));
-    params.append('callback', 'handleResponse');
-    
-    const getUrl = `${url}?${params.toString()}`;
-    console.log('Making GET request to avoid CORS');
-    
-    const res = await fetch(getUrl, {
-      method: 'GET',
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
       mode: 'cors',
       credentials: 'omit'
     });
     
     if (!res.ok) {
-      const errorText = await res.text();
-      console.error('API Response Error:', { status: res.status, statusText: res.statusText, body: errorText });
-      throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+      let errorMessage = `HTTP ${res.status}: ${res.statusText}`;
+      
+      // レスポンスボディからエラー詳細を取得
+      try {
+        const errorText = await res.text();
+        if (errorText) {
+          errorMessage += ` - ${errorText}`;
+        }
+      } catch (e) {
+        // テキスト取得に失敗した場合は無視
+      }
+      
+      console.error('API Response Error:', errorMessage);
+      throw new Error(errorMessage);
     }
     
     const json = await res.json();
@@ -73,27 +80,15 @@ export async function post<T>(body: any): Promise<T> {
     }
     
     return json as T;
-  } catch (error) {
+  } catch (error: any) {
     console.error('API Error:', error);
     
-    // フォールバック: 単純なPOST試行
-    console.log('Fallback: trying simple POST without CORS checks');
-    
-    try {
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-        mode: 'no-cors'
-      });
-      
-      // no-corsでは結果を取得できないため、成功と仮定
-      console.log('POST request sent (no-cors mode)');
-      return { ok: true, message: 'Request sent via fallback' } as T;
-    } catch (fallbackError) {
-      console.error('Fallback POST also failed:', fallbackError);
-      throw new Error('Both CORS and fallback requests failed');
+    // ネットワークエラーの場合のメッセージ改善
+    if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+      throw new Error('ネットワークエラーが発生しました。インターネット接続を確認してください。');
     }
+    
+    throw error;
   }
 }
 
