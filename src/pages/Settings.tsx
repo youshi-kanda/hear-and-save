@@ -102,11 +102,18 @@ const Settings = () => {
         {/* ASR Settings */}
         <Card className="p-6 mb-6">
           <h2 className="text-xl font-bold mb-4">文字起こし（ASR）設定</h2>
+          {/* 告知バナー（カード上） */}
+          <div className="mb-4 rounded-md border border-warning bg-warning-bg p-3">
+            <p className="text-sm text-warning-foreground">
+              開発中です。開発用キーで運用中のためテスト利用でご使用いただけます。
+            </p>
+          </div>
           <div className="space-y-4">
             <div>
               <Label htmlFor="asr-provider">プロバイダ</Label>
-              <Select value={asrProvider} onValueChange={(v) => setAsrProvider(v as AsrProvider)}>
-                <SelectTrigger id="asr-provider">
+              {/* 全面無効化 */}
+              <Select value={asrProvider} onValueChange={(v) => setAsrProvider(v as AsrProvider)} disabled>
+                <SelectTrigger id="asr-provider" disabled>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -126,6 +133,7 @@ const Settings = () => {
                 value={asrApiKey}
                 onChange={(e) => setAsrApiKey(e.target.value)}
                 placeholder="sk-..."
+                disabled
               />
             </div>
 
@@ -137,6 +145,7 @@ const Settings = () => {
                   value={asrModel}
                   onChange={(e) => setAsrModel(e.target.value)}
                   placeholder="whisper-1"
+                  disabled
                 />
               </div>
             )}
