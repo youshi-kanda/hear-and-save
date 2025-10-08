@@ -36,7 +36,7 @@ export interface SchemaResponse {
 }
 
 // シンプルなPOSTリクエストを使用したGAS WebApp通信
-export async function post<T>(body: any): Promise<T> {
+export async function post<T>(body: Record<string, unknown>): Promise<T> {
   const url = import.meta.env.VITE_GAS_API_URL!;
   if (!url) {
     throw new Error('VITE_GAS_API_URL is not configured');
@@ -84,11 +84,11 @@ export async function post<T>(body: any): Promise<T> {
     }
     
     return json as T;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('API Error:', error);
     
     // ネットワークエラーの場合のメッセージ改善
-    if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+    if (error instanceof TypeError && (error as TypeError).message.includes('Failed to fetch')) {
       throw new Error('ネットワークエラーが発生しました。インターネット接続を確認してください。');
     }
     
