@@ -48,6 +48,19 @@ export async function post<T>(body: any): Promise<T> {
   try {
     console.log('API Request:', { url, route: body.route });
     
+    // CORS回避のため、まずOPTIONSリクエストを手動実行
+    const optionsRes = await fetch(url, {
+      method: 'OPTIONS',
+      headers: { 
+        'Origin': 'https://youshi-kanda.github.io',
+        'Access-Control-Request-Method': 'POST',
+        'Access-Control-Request-Headers': 'Content-Type'
+      },
+      signal: controller.signal,
+    });
+    
+    console.log('OPTIONS Response:', { status: optionsRes.status });
+    
     const res = await fetch(url, {
       method: 'POST',
       headers: { 
