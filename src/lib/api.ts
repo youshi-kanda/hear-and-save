@@ -45,12 +45,16 @@ export async function post<T>(body: any): Promise<T> {
   console.log('API Request:', { url, route: body.route });
 
   try {
+    // URLSearchParamsを使用してフォームデータとして送信
+    const params = new URLSearchParams();
+    params.append('data', JSON.stringify(body));
+    
     const res = await fetch(url, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/x-www-form-urlencoded',
       },
-      body: JSON.stringify(body),
+      body: params.toString(),
       mode: 'cors',
       credentials: 'omit'
     });
