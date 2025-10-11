@@ -37,9 +37,15 @@ export interface SchemaResponse {
 
 // シンプルなPOSTリクエストを使用したGAS WebApp通信
 export async function post<T>(body: Record<string, unknown>): Promise<T> {
-  const url = import.meta.env.VITE_GAS_API_URL!;
+  const rawUrl = import.meta.env.VITE_GAS_API_URL as string | undefined;
+  const url = rawUrl?.trim();
   if (!url) {
     throw new Error('VITE_GAS_API_URL is not configured');
+  }
+  if (url.startsWith('https://script.google.com') && !url.endsWith('/exec')) {
+    throw new Error(
+      'VITE_GAS_API_URL must point to the deployed Web App "exec" endpoint. 現在の値を確認してください。'
+    );
   }
 
   console.log('API Request:', { url, route: body.route });
