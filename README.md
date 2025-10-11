@@ -74,6 +74,19 @@ For demo environments where you want to ship a preconfigured speech recognition 
 
 When the application boots it will automatically persist this configuration to `sessionStorage` if no ASR settings have been saved yet, enabling the recording screen to call `transcribe` without requiring the settings UI.
 
+## Google Apps Script backend
+
+The frontend communicates with a Google Apps Script (GAS) web app that handles speech-to-text, LLM analysis, spreadsheet persistence, schema management, and system status checks. The script source and deployment steps are stored under [`gas/`](gas/).
+
+Quick steps:
+
+1. Copy [`gas/gas-script.js`](gas/gas-script.js) into your GAS project (e.g. `Code.gs`).
+2. Configure Script Properties for each provider API key (e.g. `GOOGLE_API_KEY`, `OPENAI_API_KEY`) and `GCS_BUCKET_NAME` for Google Speech long audio support.
+3. Update the `SPREADSHEET_ID` constant to point at your Google Sheet, then deploy the script as a Web App.
+4. Set `VITE_GAS_API_URL` in this frontend to the deployed Web App URL.
+
+See [`gas/README.md`](gas/README.md) for the full deployment guide and operational notes.
+
 ## Can I connect a custom domain to my Lovable project?
 
 Yes, you can!
