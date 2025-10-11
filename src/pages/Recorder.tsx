@@ -23,6 +23,8 @@ export interface Bookmark {
 
 const Recorder = () => {
   const { toast } = useToast();
+  const [isRecordingSupported, setIsRecordingSupported] = useState(true);
+  const [preferredMimeType, setPreferredMimeType] = useState<string | null>(null);
   const [showConsent, setShowConsent] = useState(!hasConsent());
   const [recordingState, setRecordingState] = useState<RecordingState>('idle');
   const [currentStep, setCurrentStep] = useState<ProcessStep>('recording');
@@ -32,6 +34,7 @@ const Recorder = () => {
   const [transcript, setTranscript] = useState('');
   const [summary, setSummary] = useState('');
   const [extractedData, setExtractedData] = useState<Record<string, string>>({});
+  const MAX_RECORDING_SECONDS = 60 * 5; // 5分上限（GASやASRコスト対策）
 
   // MediaRecorder関連の ref と state
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -42,7 +45,59 @@ const Recorder = () => {
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const levelIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
+  // ブラウザ対応状況と利用可能なMIMEタイプを判定
+  useEffect(() => {
+    const detectSupport = () => {
+      const hasMediaRecorder = typeof window !== 'undefined' && typeof (window as any).MediaRecorder !== 'undefined';
+      if (!hasMediaRecorder) {
+        setIsRecordingSupported(false);
+        setPreferredMimeType(null);
+        toast({
+          title: '録音に未対応のブラウザ',
+          description: 'このブラウザは録音APIに対応していません。最新のChrome/Edge/Firefoxをお試しください。iOSはバージョンにより非対応です。',
+          variant: 'destructive'
+        });
+        return;
+      }
+
+      const candidates = [
+        'audio/webm;codecs=opus',
+        'audio/webm',
+        'audio/mp4',
+        'audio/ogg;codecs=opus',
+        'audio/ogg'
+      ];
+      let selected: string | null = null;
+      try {
+        // @ts-expect-error: isTypeSupported is available where MediaRecorder exists
+        const isTypeSupported = (window as any).MediaRecorder.isTypeSupported?.bind((window as any).MediaRecorder);
+        if (isTypeSupported) {
+          for (const t of candidates) {
+            if (isTypeSupported(t)) {
+              selected = t;
+              break;
+            }
+          }
+        }
+      } catch (_) {
+        // no-op
+      }
+      setPreferredMimeType(selected);
+      setIsRecordingSupported(true);
+    };
+
+    detectSupport();
+  }, [toast]);
+
   const handleStartRecording = async () => {
+    if (!isRecordingSupported) {
+      toast({
+        title: '録音を開始できません',
+        description: 'ご利用の環境では録音機能が利用できません。対応ブラウザをご利用ください。',
+        variant: 'destructive'
+      });
+      return;
+    }
     if (!hasConsent()) {
       setShowConsent(true);
       return;
@@ -58,8 +113,16 @@ const Recorder = () => {
       const source = audioContextRef.current.createMediaStreamSource(stream);
       source.connect(analyserRef.current);
 
-      // MediaRecorder setup
-      const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+      // MediaRecorder setup（対応MIMEタイプを優先、なければブラウザ既定）
+      let mediaRecorder: MediaRecorder;
+      try {
+        mediaRecorder = preferredMimeType
+          ? new MediaRecorder(stream, { mimeType: preferredMimeType })
+          : new MediaRecorder(stream);
+      } catch (e) {
+        // フォールバック：オプションなしで再試行
+        mediaRecorder = new MediaRecorder(stream);
+      }
       mediaRecorderRef.current = mediaRecorder;
       chunksRef.current = [];
 
@@ -76,9 +139,19 @@ const Recorder = () => {
       mediaRecorder.start();
       setRecordingState('recording');
       
-      // Start duration timer
+      // Start duration timer & enforce max duration
       intervalRef.current = setInterval(() => {
-        setDuration(prev => prev + 1);
+        setDuration(prev => {
+          const next = prev + 1;
+          if (next >= MAX_RECORDING_SECONDS) {
+            toast({
+              title: '自動停止しました',
+              description: `録音は${Math.floor(MAX_RECORDING_SECONDS/60)}分までに制限しています。処理を開始します。`
+            });
+            handleStopRecording();
+          }
+          return next;
+        });
       }, 1000);
 
       // Start level monitoring
@@ -163,7 +236,8 @@ const Recorder = () => {
   const processRecording = async () => {
     if (chunksRef.current.length === 0) return;
 
-    const audioBlob = new Blob(chunksRef.current, { type: 'audio/webm' });
+    const blobType = preferredMimeType || 'audio/webm';
+    const audioBlob = new Blob(chunksRef.current, { type: blobType });
     
     // Convert to base64 for API
     const reader = new FileReader();

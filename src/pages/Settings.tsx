@@ -46,6 +46,26 @@ const Settings = () => {
   }, []);
 
   const handleSave = () => {
+    // 入力バリデーション（LLM必須、ASRは現状UI無効のため軽め）
+    if (!llmApiKey.trim()) {
+      toast({
+        title: '入力エラー',
+        description: 'LLMのAPIキーを入力してください。',
+        variant: 'destructive'
+      });
+      return;
+    }
+    if (llmProvider === 'azure') {
+      if (!llmEndpoint.trim() || !llmDeployment.trim() || !llmApiVersion.trim()) {
+        toast({
+          title: '入力エラー',
+          description: 'Azureのエンドポイント、デプロイメント名、APIバージョンは必須です。',
+          variant: 'destructive'
+        });
+        return;
+      }
+    }
+
     const asrConfig: AsrConfig = {
       provider: asrProvider,
       apiKey: asrApiKey,
@@ -214,23 +234,7 @@ const Settings = () => {
               />
             </div>
 
-            {llmProvider !== 'azure' && (
-              <div>
-                <Label htmlFor="llm-model">モデル</Label>
-                <Input
-                  id="llm-model"
-                  value={llmModel}
-                  onChange={(e) => setLlmModel(e.target.value)}
-                  placeholder={
-                    llmProvider === 'openai'
-                      ? 'gpt-4o'
-                      : llmProvider === 'google'
-                      ? 'gemini-2.0-flash-exp'
-                      : 'claude-sonnet-4-20250514'
-                  }
-                />
-              </div>
-            )}
+            {/* モデル指定は不要のため非表示（サーバ側でプロバイダ既定を使用） */}
           </div>
         </Card>
       </main>
