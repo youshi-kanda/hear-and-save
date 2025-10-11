@@ -4,19 +4,35 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Save, Home } from 'lucide-react';
+import { Save, Home } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { getAsrConfig, getLlmConfig, saveAsrConfig, saveLlmConfig } from '@/lib/storage';
+import {
+  getAsrConfig,
+  getLlmConfig,
+  saveAsrConfig,
+  saveLlmConfig,
+  isDemoAsrMode,
+  getDefaultAsrConfig,
+} from '@/lib/storage';
 import type { AsrProvider, LlmProvider, AsrConfig, LlmConfig } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 
 const Settings = () => {
   const { toast } = useToast();
-  
+
+  const defaultAsrConfig = getDefaultAsrConfig();
+  const initialAsrConfig =
+    typeof window !== 'undefined' ? getAsrConfig() ?? defaultAsrConfig : defaultAsrConfig;
+  const isAsrDemoMode = isDemoAsrMode;
+
   // ASR Settings
-  const [asrProvider, setAsrProvider] = useState<AsrProvider>('openai');
-  const [asrApiKey, setAsrApiKey] = useState('');
-  const [asrModel, setAsrModel] = useState('whisper-1');
+  const [asrProvider, setAsrProvider] = useState<AsrProvider>(
+    (initialAsrConfig?.provider as AsrProvider | undefined) ??
+      (defaultAsrConfig?.provider as AsrProvider | undefined) ??
+      'openai'
+  );
+  const [asrApiKey, setAsrApiKey] = useState(initialAsrConfig?.apiKey ?? defaultAsrConfig?.apiKey ?? '');
+  const [asrModel, setAsrModel] = useState(initialAsrConfig?.model ?? defaultAsrConfig?.model ?? 'whisper-1');
 
   // LLM Settings
   const [llmProvider, setLlmProvider] = useState<LlmProvider>('azure');
@@ -46,7 +62,7 @@ const Settings = () => {
   }, []);
 
   const handleSave = () => {
-    // 入力バリデーション（LLM必須、ASRは現状UI無効のため軽め）
+    // 入力バリデーション（LLM必須、ASRはデモモードでは固定設定）
     if (!llmApiKey.trim()) {
       toast({
         title: '入力エラー',
@@ -123,17 +139,28 @@ const Settings = () => {
         <Card className="p-6 mb-6">
           <h2 className="text-xl font-bold mb-4">文字起こし（ASR）設定</h2>
           {/* 告知バナー（カード上） */}
-          <div className="mb-4 rounded-md border border-warning bg-warning-bg p-3">
-            <p className="text-sm text-warning-foreground">
-              開発中です。開発用キーで運用中のためテスト利用でご使用いただけます。
-            </p>
-          </div>
+          {isAsrDemoMode ? (
+            <div className="mb-4 rounded-md border border-warning bg-warning-bg p-3">
+              <p className="text-sm text-warning-foreground">
+                デモモードでは Google Cloud Speech-to-Text のキーが自動適用されます（GAS側で管理）。
+              </p>
+            </div>
+          ) : (
+            <div className="mb-4 rounded-md border border-muted bg-muted/30 p-3">
+              <p className="text-sm text-muted-foreground">
+                本番では利用する ASR プロバイダの API キーを入力してください。キーはブラウザのセッション内でのみ保持されます。
+              </p>
+            </div>
+          )}
           <div className="space-y-4">
             <div>
               <Label htmlFor="asr-provider">プロバイダ</Label>
-              {/* 全面無効化 */}
-              <Select value={asrProvider} onValueChange={(v) => setAsrProvider(v as AsrProvider)} disabled>
-                <SelectTrigger id="asr-provider" disabled>
+              <Select
+                value={asrProvider}
+                onValueChange={(v) => setAsrProvider(v as AsrProvider)}
+                disabled={isAsrDemoMode}
+              >
+                <SelectTrigger id="asr-provider" disabled={isAsrDemoMode}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -153,7 +180,7 @@ const Settings = () => {
                 value={asrApiKey}
                 onChange={(e) => setAsrApiKey(e.target.value)}
                 placeholder="sk-..."
-                disabled
+                disabled={isAsrDemoMode}
               />
             </div>
 
@@ -165,7 +192,7 @@ const Settings = () => {
                   value={asrModel}
                   onChange={(e) => setAsrModel(e.target.value)}
                   placeholder="whisper-1"
-                  disabled
+                  disabled={isAsrDemoMode}
                 />
               </div>
             )}
