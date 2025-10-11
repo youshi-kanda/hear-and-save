@@ -64,6 +64,16 @@ This project is built with:
 
 Simply open [Lovable](https://lovable.dev/projects/82c8af1c-e1ac-4a3d-b2d8-9e8a2310a917) and click on Share -> Publish.
 
+## Demo ASR configuration
+
+For demo environments where you want to ship a preconfigured speech recognition setup (e.g. a Google Cloud key), provide the following Vite environment variables at build time:
+
+- `VITE_DEMO_ASR_PROVIDER` – one of `openai`, `deepgram`, `google`, or `azure`.
+- `VITE_DEMO_ASR_API_KEY` – the API key that should be stored in `sessionStorage` for the current session.
+- `VITE_DEMO_ASR_MODEL` *(optional)* – model name to include in the saved configuration.
+
+When the application boots it will automatically persist this configuration to `sessionStorage` if no ASR settings have been saved yet, enabling the recording screen to call `transcribe` without requiring the settings UI.
+
 ## Can I connect a custom domain to my Lovable project?
 
 Yes, you can!

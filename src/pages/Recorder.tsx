@@ -48,7 +48,8 @@ const Recorder = () => {
   // ブラウザ対応状況と利用可能なMIMEタイプを判定
   useEffect(() => {
     const detectSupport = () => {
-      const hasMediaRecorder = typeof window !== 'undefined' && typeof (window as any).MediaRecorder !== 'undefined';
+      const hasMediaRecorder =
+        typeof window !== 'undefined' && typeof MediaRecorder !== 'undefined';
       if (!hasMediaRecorder) {
         setIsRecordingSupported(false);
         setPreferredMimeType(null);
@@ -69,8 +70,11 @@ const Recorder = () => {
       ];
       let selected: string | null = null;
       try {
-        // @ts-expect-error: isTypeSupported is available where MediaRecorder exists
-        const isTypeSupported = (window as any).MediaRecorder.isTypeSupported?.bind((window as any).MediaRecorder);
+        const isTypeSupported =
+          typeof MediaRecorder !== 'undefined' &&
+          typeof MediaRecorder.isTypeSupported === 'function'
+            ? MediaRecorder.isTypeSupported.bind(MediaRecorder)
+            : undefined;
         if (isTypeSupported) {
           for (const t of candidates) {
             if (isTypeSupported(t)) {
