@@ -94,6 +94,11 @@ See [`gas/README.md`](gas/README.md) for the full deployment guide and operation
 3. GAS 側の `gas/gas-script.js` を最新化し、スプレッドシート ID や API キー設定がプロダクション環境と一致していることを確認します。
 4. 以上の確認が完了したら、`work` ブランチを `main` ブランチへマージし、GitHub Pages のデプロイ結果を確認します（`work` ブランチへ push した時点でも自動デプロイが走るため、事前確認が必要な場合は `work` に push して挙動を確認できます）。
 
+## GitHub Pages ワークフローについて
+
+- GitHub Pages へのデプロイは `.github/workflows/pages.yml` のみで管理しています。旧来の `deploy.yml` は削除したため、Actions タブからデプロイを確認する場合は `Deploy to GitHub Pages` ワークフローを参照してください。
+- `work` ブランチで挙動を確認したいときは、`work` に push した直後に Actions タブで `Deploy to GitHub Pages` を選択し、対象ブランチを `work` にして `Run workflow` を実行します。GitHub Actions は最新コミットに対する push が発生した場合にのみ自動トリガーされるため、ワークフローファイルを更新した直後などは手動実行が必要です。
+
 ## Can I connect a custom domain to my Lovable project?
 
 Yes, you can!
