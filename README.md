@@ -87,6 +87,13 @@ Quick steps:
 
 See [`gas/README.md`](gas/README.md) for the full deployment guide and operational notes.
 
+## 本番（main ブランチ）反映前のチェックリスト
+
+1. `npm run build` をローカルで実行し、フロントエンドが問題なくビルドできることを確認します。
+2. 必要であれば `.env` または GitHub Actions のシークレットに `VITE_GAS_API_URL` や `VITE_DEMO_ASR_*` を設定し、デモ環境でも自動的に ASR 設定が反映されるようにします。
+3. GAS 側の `gas/gas-script.js` を最新化し、スプレッドシート ID や API キー設定がプロダクション環境と一致していることを確認します。
+4. 以上の確認が完了したら、`work` ブランチを `main` ブランチへマージし、GitHub Pages のデプロイ結果を確認します。
+
 ## Can I connect a custom domain to my Lovable project?
 
 Yes, you can!
